@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { takePhoto } from "../services/camera";
-import { savePhotoTemporarily } from "../services/storage";
+import { savePhotoPermanently } from "../services/storage";
+// import { savePhotoTemporarily } from "../services/storage";
 import DateConfirmView from "./DateConfirmView.vue";
 
 type Step = "camera" | "confirm";
@@ -19,7 +20,7 @@ async function capture() {
   photoPath.value = result;
 
   const fileName = `photo_${Date.now()}.jpg`;
-  const saved = await savePhotoTemporarily(result, fileName);
+  const saved = await savePhotoPermanently(result, fileName);
 
   if (!saved) return;
   savedPath.value = saved;

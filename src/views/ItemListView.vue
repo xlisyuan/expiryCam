@@ -3,6 +3,8 @@ import { ref } from "vue";
 import MenuPopup from "../components/MenuPopup.vue";
 import DateConfirmView from "./DateConfirmView.vue";
 import { takePhoto } from "../services/camera";
+import { Preferences } from "@capacitor/preferences";
+import { onMounted, watch } from "vue";
 // import { savePhotoTemporarily } from '../services/storage'
 
 type ViewMode = "daily" | "weekly" | "monthly";
@@ -173,6 +175,7 @@ function cancelMultiSelect() {
   selectedIds.value.clear();
   multiSelectMode.value = false;
 }
+
 function deleteExpired() {
   selectedIds.value.clear();
   const now = new Date();
@@ -182,9 +185,27 @@ function deleteExpired() {
   });
   multiSelectMode.value = true;
 }
+
 function showAbout(alertText: string) {
   window.alert(alertText);
 }
+
+async function persistItems() {
+  await Preferences.set({
+    key: "items",
+    value: JSON.stringify(items.value),
+  });
+}
+
+onMounted(async () => {
+  const { value } = await Preferences.get({ key: "items" });
+  if (value) {
+    items.value = JSON.parse(value);
+    nextId = Math.max(0, ...items.value.map((i) => i.id)) + 1;
+  }
+});
+
+watch(items, persistItems, { deep: true });
 </script>
 
 <template>
