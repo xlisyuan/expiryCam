@@ -1,22 +1,30 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import DateConfirmView from './DateConfirmView.vue'
 import { takePhoto } from '../services/camera'
 import { savePhotoTemporarily } from '../services/storage'
-import DateConfirmView from './DateConfirmView.vue'
 
-type Item = {
-  id: string
+// -------------------------
+// 清單資料
+// -------------------------
+interface Item {
+  id: number
   photoUri: string
-  expiry: string // YYMMDD
+  date: { yy: string; mm: string; dd: string }
 }
 
 const items = ref<Item[]>([])
+let nextId = 1
 
-// flow 狀態
-const showDateConfirm = ref(false)
+// -------------------------
+// 暫存拍照照片
+// -------------------------
 const tempPhotoUri = ref<string | null>(null)
+const showDateConfirm = ref(false)
 
-/** 拍照（全域動作） */
+// -------------------------
+// 拍照流程
+// -------------------------
 async function onTakePhoto() {
   const photo = await takePhoto()
   if (!photo) return
@@ -26,103 +34,70 @@ async function onTakePhoto() {
   if (!saved) return
 
   tempPhotoUri.value = saved
-  showDateConfirm.value = true
+  showDateConfirm.value = true // 🔥 拍完直接跳日期確認 overlay
 }
 
-/** 預設日期（暫時用當日，之後接選單） */
-function getDefaultDate() {
-  const d = new Date()
-  return {
-    yy: String(d.getFullYear()).slice(2),
-    mm: String(d.getMonth() + 1).padStart(2, '0'),
-    dd: String(d.getDate()).padStart(2, '0')
-  }
-}
+// -------------------------
+// DateConfirmView 事件
+// -------------------------
+function onDateDone(date: { yy: string; mm: string; dd: string }) {
+  if (!tempPhotoUri.value) return
 
-/** 放棄這張照片 */
-function cancelConfirm() {
+  // 新增到清單
+  items.value.unshift({
+    id: nextId++,
+    photoUri: tempPhotoUri.value,
+    date,
+  })
+
+  // 重置暫存
   tempPhotoUri.value = null
   showDateConfirm.value = false
 }
 
-/** 確認日期 → 存入清單 */
-function doneConfirm(date: { yy: string; mm: string; dd: string }) {
-  items.value.unshift({
-    id: crypto.randomUUID(),
-    photoUri: tempPhotoUri.value!,
-    expiry: `${date.yy}${date.mm}${date.dd}`
-  })
-
+function onDateCancel() {
+  // 取消日期 → 暫存照片不存入清單
   tempPhotoUri.value = null
   showDateConfirm.value = false
 }
 </script>
 
 <template>
-  <div class="page">
-    <!-- Header -->
-    <header class="header">
-      <button @click="onTakePhoto">📸 拍照</button>
-    </header>
+  <div class="container">
+    <!-- 拍照按鈕 -->
+    <button @click="onTakePhoto">拍照</button>
 
     <!-- 清單 -->
-    <main class="list">
-      <p v-if="items.length === 0" class="empty">
-        尚未記錄任何物品
-      </p>
+    <div v-if="items.length === 0" style="margin-top: 12px;">沒有紀錄</div>
+    <ul v-else style="margin-top: 12px;">
+      <li v-for="item in items" :key="item.id">
+        <img :src="item.photoUri" style="width: 80px; margin-right: 8px;" />
+        {{ item.date.yy }} / {{ item.date.mm }} / {{ item.date.dd }}
+      </li>
+    </ul>
 
-      <div
-        v-for="item in items"
-        :key="item.id"
-        class="item"
-      >
-        <img :src="item.photoUri" />
-        <div class="expiry">
-          效期：{{ item.expiry }}
-        </div>
-      </div>
-    </main>
-
-    <!-- 日期確認 Overlay -->
+    <!-- 日期確認 overlay -->
     <DateConfirmView
-      v-if="showDateConfirm"
-      :photo-uri="tempPhotoUri!"
-      :default-date="getDefaultDate()"
-      @cancel="cancelConfirm"
-      @done="doneConfirm"
+      v-if="showDateConfirm && tempPhotoUri"
+      :photo-uri="tempPhotoUri"
+      :default-date="{ yy: '23', mm: '01', dd: '01' }"
+      @done="onDateDone"
+      @cancel="onDateCancel"
     />
   </div>
 </template>
 
 <style scoped>
-.page {
-  padding: 12px;
+.container {
+  padding: 16px;
 }
-
-.header {
+ul {
+  list-style: none;
+  padding: 0;
+}
+li {
   display: flex;
-  justify-content: center;
-  margin-bottom: 12px;
-}
-
-.list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.item img {
-  width: 100%;
-  border-radius: 4px;
-}
-
-.expiry {
-  text-align: center;
-  font-size: 14px;
-}
-
-.empty {
-  text-align: center;
-  color: #888;
+  align-items: center;
+  margin-bottom: 8px;
 }
 </style>
