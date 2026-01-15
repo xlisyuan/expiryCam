@@ -96,8 +96,8 @@ const groupedItems = computed(() => {
     if (viewMode.value === 'daily') {
       key = d.toISOString().slice(0, 10) // YYYY-MM-DD
     } else if (viewMode.value === 'weekly') {
-      const week = getWeekNumber(d)
-      key = `${d.getFullYear()}-W${week}`
+      const { startOfWeek, endOfWeek } = getWeekRange(d)
+      key = `${formatDate(startOfWeek)} ~ ${formatDate(endOfWeek)}`
     } else if (viewMode.value === 'monthly') {
       key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
     }
@@ -113,13 +113,21 @@ const groupedItems = computed(() => {
   return groups
 })
 
-// 計算週數
-function getWeekNumber(date: Date) {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  const dayNum = d.getUTCDay() || 7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+// 週範圍
+function getWeekRange(date: Date) {
+  const d = new Date(date)
+  const day = d.getDay() || 7 // Sunday = 7
+  const startOfWeek = new Date(d)
+  startOfWeek.setDate(d.getDate() - day + 1)
+  const endOfWeek = new Date(startOfWeek)
+  endOfWeek.setDate(startOfWeek.getDate() + 6)
+  return { startOfWeek, endOfWeek }
+}
+
+function formatDate(d: Date) {
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${mm}/${dd}`
 }
 
 function formatExpiry(date: { yy: string; mm: string; dd: string }, mode: ViewMode) {
@@ -148,18 +156,13 @@ function formatExpiry(date: { yy: string; mm: string; dd: string }, mode: ViewMo
     </div>
 
     <div v-for="(group, key) in groupedItems" :key="key" class="group">
-  <div class="group-header">
-    <span v-if="viewMode==='daily'">{{ key }}</span>
-    <span v-else-if="viewMode==='weekly'">Week {{ key.split('-W')[1] }} / {{ key.split('-W')[0] }}</span>
-    <span v-else-if="viewMode==='monthly'">Month {{ key.split('-')[1] }} / {{ key.split('-')[0] }}</span>
-  </div>
-
-  <ul>
-    <li v-for="item in group" :key="item.id">
-      <img :src="item.photoUri" style="width: 80px; margin-right: 8px;" />
-      <span>{{ formatExpiry(item.date, viewMode) }}</span>
-    </li>
-  </ul>
+    <div class="group-header">{{ key }}</div>
+    <ul>
+        <li v-for="item in group" :key="item.id">
+        <img :src="item.photoUri" style="width: 80px; margin-right: 8px;" />
+        <span>{{ formatExpiry(item.date, viewMode) }}</span>
+        </li>
+    </ul>
 </div>
 
     <!-- 日期確認 overlay -->
