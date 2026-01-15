@@ -7,6 +7,13 @@ import { savePhotoTemporarily } from '../services/storage'
 type ViewMode = 'daily' | 'weekly' | 'monthly'
 const viewMode = ref<ViewMode>('daily')
 
+const now = new Date()
+const defaultDate = {
+  yy: String(now.getFullYear()).slice(2), // 取後兩位
+  mm: String(now.getMonth() + 1).padStart(2, '0'),
+  dd: String(now.getDate()).padStart(2, '0')
+}
+
 // -------------------------
 // 清單資料
 // -------------------------
@@ -155,21 +162,11 @@ function formatExpiry(date: { yy: string; mm: string; dd: string }, mode: ViewMo
   </ul>
 </div>
 
-
-    <!-- 清單 -->
-    <div v-if="items.length === 0" style="margin-top: 12px;">沒有紀錄</div>
-    <ul v-else style="margin-top: 12px;">
-      <li v-for="item in items" :key="item.id">
-        <img :src="item.photoUri" style="width: 80px; margin-right: 8px;" />
-        {{ item.date.yy }} / {{ item.date.mm }} / {{ item.date.dd }}
-      </li>
-    </ul>
-
     <!-- 日期確認 overlay -->
     <DateConfirmView
       v-if="showDateConfirm && tempPhotoUri"
       :photo-uri="tempPhotoUri"
-      :default-date="{ yy: '23', mm: '01', dd: '01' }"
+      :default-date="defaultDate"
       @done="onDateDone"
       @cancel="onDateCancel"
     />
