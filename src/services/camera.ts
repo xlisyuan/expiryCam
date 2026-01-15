@@ -1,18 +1,17 @@
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 
-export async function takePhoto(): Promise<string | null> {
+export async function takePhoto() {
   try {
     const photo = await Camera.getPhoto({
-      quality: 90,
-      allowEditing: false,
-      resultType: CameraResultType.Uri, // 回傳檔案 URI
-      source: CameraSource.Camera
+      resultType: CameraResultType.Uri, // 拿 URI
+      source: CameraSource.Camera,
+      saveToGallery: false
     })
 
-    // URI 是本地檔案路徑，例如 file://...
-    return photo.webPath || photo.path || null
-  } catch (err) {
-    console.error('Camera error:', err)
+    // ⚡ webPath 是可直接給 <img> 的網址
+    return photo.webPath || null
+  } catch (e) {
+    console.error(e)
     return null
   }
 }

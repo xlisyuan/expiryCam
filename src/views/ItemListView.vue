@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import DateConfirmView from './DateConfirmView.vue'
 import { takePhoto } from '../services/camera'
-import { savePhotoTemporarily } from '../services/storage'
+// import { savePhotoTemporarily } from '../services/storage'
 
 type ViewMode = 'daily' | 'weekly' | 'monthly'
 const viewMode = ref<ViewMode>('daily')
@@ -39,15 +39,12 @@ const showDateConfirm = ref(false)
 // 拍照流程
 // -------------------------
 async function onTakePhoto() {
-  const photo = await takePhoto()
-  if (!photo) return
+  const photoUri = await takePhoto()
+  if (!photoUri) return
 
-  const fileName = `photo_${Date.now()}.jpg`
-  const saved = await savePhotoTemporarily(photo, fileName)
-  if (!saved) return
-
-  tempPhotoUri.value = saved
-  showDateConfirm.value = true // 🔥 拍完直接跳日期確認 overlay
+  // 這邊可以暫存或存 DB
+  tempPhotoUri.value = photoUri
+  showDateConfirm.value = true // 拍完直接跳日期 overlay
 }
 
 // -------------------------
@@ -200,8 +197,10 @@ function cancelMultiSelect() {
     <ul>
        <li v-for="item in group" :key="item.id" @click="multiSelectMode ? toggleSelect(item) : null"
         :class="{ selected: isSelected(item) }">
-        <img :src="item.photoUri" style="width: 80px; margin-right: 8px;" />
-        <span>{{ formatExpiry(item.date, viewMode) }}</span>
+        <img :src="item.photoUri" class="item-thumb" />
+        <div class="item-info">
+            <span class="expiry">{{ formatExpiry(item.date, viewMode) }}</span>
+        </div>
       </li>
     </ul>
 </div>
@@ -231,4 +230,30 @@ li {
   margin-bottom: 8px;
 }
  .selected { border: 2px solid blue; }
+ .item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.item-thumb {
+  width: 80px; /* 縮圖大小，可依需求調整 */
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-right: 12px;
+  border: 1px solid #ccc;
+}
+
+.item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.expiry {
+  font-size: 14px;
+  color: #333;
+}
+
 </style>
