@@ -7,7 +7,7 @@ import { Preferences } from "@capacitor/preferences";
 import { onMounted, watch } from "vue";
 // import { savePhotoTemporarily } from '../services/storage'
 
-type ViewMode = "daily" | "weekly" | "monthly";
+type ViewMode = "daily" | "weekly" | "monthly" | "none";
 const viewMode = ref<ViewMode>("daily");
 
 const multiSelectMode = ref(false);
@@ -106,6 +106,8 @@ const groupedItems = computed(() => {
       key = `${formatDate(startOfWeek)} ~ ${formatDate(endOfWeek)}`;
     } else if (viewMode.value === "monthly") {
       key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    } else if (viewMode.value === "none") {
+      key = ``;
     }
 
     let group = groups[key];
@@ -141,7 +143,7 @@ function formatExpiry(
   mode: ViewMode
 ) {
   const fullYear = Number("20" + date.yy);
-  if (mode === "daily") {
+  if (mode === "daily" || mode === "none") {
     // 如果跨年就顯示 YYMMDD，否則 MMDD
     const nowYear = new Date().getFullYear();
     return fullYear === nowYear
@@ -209,26 +211,29 @@ watch(items, persistItems, { deep: true });
 </script>
 
 <template>
-  <div v-if="multiSelectMode" class="multi-actions">
-    <button @click="deleteSelected">刪除</button>
-    <button @click="cancelMultiSelect">返回</button>
-  </div>
-  <div class="container">
-    <div style="display: flex; justify-content: space-between">
-      <button @click="onTakePhoto">拍照</button>
+  <div class="sticky-header">
+    <div v-if="multiSelectMode" class="multi-actions">
+      <button @click="deleteSelected">刪除</button>
+      <button @click="cancelMultiSelect">返回</button>
+    </div>
+    <div style="display: flex; justify-content: space-between; width: 100%">
       <button @click="showMenu = true">☰</button>
     </div>
 
     <div class="view-mode">
+      <button @click="viewMode = 'none'">無</button>
       <button @click="viewMode = 'daily'">每日</button>
       <button @click="viewMode = 'weekly'">每週</button>
       <button @click="viewMode = 'monthly'">每月</button>
     </div>
+  </div>
 
+  <div class="container">
     <div v-for="(group, key) in groupedItems" :key="key" class="group">
       <div class="group-header">{{ key }}</div>
-      <ul>
+      <ul style="display: flex; flex-wrap: wrap">
         <li
+          style="flex-direction: column"
           v-for="item in group"
           :key="item.id"
           @click="multiSelectMode ? toggleSelect(item) : null"
@@ -251,6 +256,17 @@ watch(items, persistItems, { deep: true });
       @cancel="onDateCancel"
     />
   </div>
+
+  <Teleport to="body">
+    <button
+      v-if="!showDateConfirm && !showMenu"
+      class="floating-menu"
+      @click="onTakePhoto"
+    >
+      拍照
+    </button>
+  </Teleport>
+
   <MenuPopup
     v-if="showMenu"
     @close="showMenu = false"
@@ -274,6 +290,18 @@ watch(items, persistItems, { deep: true });
 </template>
 
 <style scoped>
+.floating-menu {
+  position: fixed;
+  right: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+}
+.sticky-header {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+}
 .container {
   padding: 16px;
 }
@@ -312,6 +340,6 @@ li {
 
 .expiry {
   font-size: 14px;
-  color: #333;
+  /* color: #333; */
 }
 </style>
