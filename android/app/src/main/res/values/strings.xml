@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ExpiryCam</string>
+    <string name="title_activity_main">ExpiryCam</string>
+    <string name="package_name">com.lis.expirycam</string>
+    <string name="custom_url_scheme">com.lis.expirycam</string>
+</resources>
