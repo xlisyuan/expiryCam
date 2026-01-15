@@ -1,154 +1,158 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const props = defineProps<{
+/** props */
+interface Props {
   photoUri: string
   defaultDate: { yy: string; mm: string; dd: string }
-}>()
+}
+const props = defineProps<Props>()
 
+/** emits */
 const emit = defineEmits<{
+  (e: 'done', date: { yy: string; mm: string; dd: string }): void
   (e: 'cancel'): void
-  (e: 'done', value: { yy: string; mm: string; dd: string }): void
 }>()
 
+/** 日期狀態 */
 const yy = ref(props.defaultDate.yy)
 const mm = ref(props.defaultDate.mm)
 const dd = ref(props.defaultDate.dd)
 
+/** 輸入狀態 */
+const buffer = ref('')
 const activeField = ref<'yy' | 'mm' | 'dd' | null>(null)
-let buffer = ''
 
+/** 點欄位開始輸入 */
 function startInput(field: 'yy' | 'mm' | 'dd') {
   activeField.value = field
-  buffer = ''
+  buffer.value = ''
 }
 
+/** reset buffer */
+function resetBuffer() {
+  buffer.value = ''
+}
+
+/** 處理輸入數字 */
 function inputDigit(d: string) {
-  buffer += d
+  buffer.value += d
 
   const apply = (val: string, len = 2) =>
     val.length >= len ? val.slice(0, len) : val.padStart(len, '0')
 
-  // =========================
-  // Fast mode（沒點任何欄位）
-  // =========================
   if (activeField.value === null) {
-    if (buffer.length <= 2) {
-      // DD
-      dd.value = buffer.padStart(2, '0')
-    } else if (buffer.length <= 4) {
-      // MM DD
-      const mmRaw = buffer.slice(0, buffer.length - 2)
-      const ddRaw = buffer.slice(-2)
-
+    if (buffer.value.length <= 2) {
+      dd.value = buffer.value.padStart(2, '0')
+    } else if (buffer.value.length <= 4) {
+      const mmRaw = buffer.value.slice(0, buffer.value.length - 2)
+      const ddRaw = buffer.value.slice(-2)
       mm.value = mmRaw.padStart(2, '0')
-      dd.value = ddRaw // 不補零
+      dd.value = ddRaw
     } else {
-      // YY MM DD（最多 6 碼）
-      yy.value = buffer.slice(0, 2)
-      mm.value = buffer.slice(2, 4)
-      dd.value = buffer.slice(4, 6)
+      yy.value = buffer.value.slice(0, 2)
+      mm.value = buffer.value.slice(2, 4)
+      dd.value = buffer.value.slice(4, 6)
     }
     return
   }
 
-  // =========================
-  // 精準模式：YY
-  // =========================
   if (activeField.value === 'yy') {
-    yy.value = apply(buffer)
+    yy.value = apply(buffer.value)
     mm.value = '01'
     dd.value = '01'
-
-    if (buffer.length >= 4) {
-      mm.value = apply(buffer.slice(2, 4))
-    }
-    if (buffer.length >= 6) {
-      dd.value = apply(buffer.slice(4, 6))
-    }
+    if (buffer.value.length >= 4) mm.value = apply(buffer.value.slice(2, 4))
+    if (buffer.value.length >= 6) dd.value = apply(buffer.value.slice(4, 6))
     return
   }
 
-  // =========================
-  // 精準模式：MM
-  // =========================
   if (activeField.value === 'mm') {
-    mm.value = apply(buffer)
+    mm.value = apply(buffer.value)
     dd.value = '01'
-
-    if (buffer.length >= 4) {
-      dd.value = apply(buffer.slice(2, 4))
-    }
+    if (buffer.value.length >= 4) dd.value = apply(buffer.value.slice(2, 4))
     return
   }
 
-  // =========================
-  // 精準模式：DD
-  // =========================
   if (activeField.value === 'dd') {
-    dd.value = apply(buffer)
+    dd.value = apply(buffer.value)
     return
   }
 }
 
-function done() {
+/** Done */
+function pressDone() {
   emit('done', { yy: yy.value, mm: mm.value, dd: dd.value })
+  resetBuffer()
+  activeField.value = null
+}
+
+/** Cancel / X */
+function pressCancel() {
+  emit('cancel')
+  resetBuffer()
+  activeField.value = null
 }
 </script>
 
 <template>
-  <div class="confirm">
-    <button class="close" @click="emit('cancel')">✕</button>
-
+  <div class="overlay">
     <img :src="photoUri" class="preview" />
 
-    <div class="date">
+    <div class="date-input">
       <span @click="startInput('yy')">{{ yy }}</span> |
       <span @click="startInput('mm')">{{ mm }}</span> |
       <span @click="startInput('dd')">{{ dd }}</span>
     </div>
 
-    <div class="keypad">
-      <button v-for="n in 9" :key="n" @click="inputDigit(String(n))">
-        {{ n }}
-      </button>
+    <div class="numpad">
+      <button v-for="n in 9" :key="n" @click="inputDigit(n.toString())">{{ n }}</button>
       <button @click="inputDigit('0')">0</button>
     </div>
 
-    <button class="done" @click="done">Done</button>
+    <div class="actions">
+      <button @click="pressCancel">X</button>
+      <button @click="pressDone">Done</button>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.confirm {
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 16px;
 }
 .preview {
-  width: 100%;
+  max-width: 80%;
   margin-bottom: 12px;
 }
-.date {
+.date-input {
   font-size: 24px;
-  text-align: center;
   margin-bottom: 12px;
 }
-.date span {
-  padding: 0 8px;
+.date-input span {
   cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: #eee;
+  margin: 0 2px;
 }
-.keypad {
+.numpad {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, 50px);
   gap: 8px;
+  margin-bottom: 12px;
 }
-.done {
-  margin-top: 16px;
-  width: 100%;
+.numpad button {
+  font-size: 20px;
+  padding: 8px 0;
 }
-.close {
-  position: absolute;
-  right: 12px;
-  top: 12px;
+.actions {
+  display: flex;
+  gap: 16px;
 }
 </style>
-
