@@ -7,6 +7,9 @@ import { savePhotoTemporarily } from '../services/storage'
 type ViewMode = 'daily' | 'weekly' | 'monthly'
 const viewMode = ref<ViewMode>('daily')
 
+const multiSelectMode =ref(false)
+const selectedIds = ref<Set<number>>(new Set())
+
 const now = new Date()
 const defaultDate = {
   yy: String(now.getFullYear()).slice(2), // 取後兩位
@@ -142,9 +145,46 @@ function formatExpiry(date: { yy: string; mm: string; dd: string }, mode: ViewMo
   return ''
 }
 
+function isSelected(item: Item) {
+  return selectedIds.value.has(item.id)
+}
+
+function toggleSelect(item: Item) {
+  if (selectedIds.value.has(item.id)) {
+    selectedIds.value.delete(item.id)
+  } else {
+    selectedIds.value.add(item.id)
+  }
+}
+
+function deleteSelected() {
+  items.value = items.value.filter(item => !selectedIds.value.has(item.id))
+  selectedIds.value.clear()
+  multiSelectMode.value =false
+}
+
+function cancelMultiSelect() {
+  selectedIds.value.clear()
+  multiSelectMode.value =false
+}
+// function deleteExpired() {
+//     selectedIds.value.clear()
+//     const now = new Date()
+//     items.value.forEach(item => {
+//     const d =parseDate(item)
+//     if (d.getTime() < now.getTime()) selectedIds.value.add(item.id)
+//     })
+//     multiSelectMode.value =true
+// }
+
+
 </script>
 
 <template>
+    <div v-if="multiSelectMode" class="multi-actions">
+        <button @click="deleteSelected">刪除</button>
+        <button @click="cancelMultiSelect">返回</button>
+    </div>
   <div class="container">
     <!-- 拍照按鈕 -->
     <button @click="onTakePhoto">拍照</button>
@@ -158,10 +198,11 @@ function formatExpiry(date: { yy: string; mm: string; dd: string }, mode: ViewMo
     <div v-for="(group, key) in groupedItems" :key="key" class="group">
     <div class="group-header">{{ key }}</div>
     <ul>
-        <li v-for="item in group" :key="item.id">
+       <li v-for="item in group" :key="item.id" @click="multiSelectMode ? toggleSelect(item) : null"
+        :class="{ selected: isSelected(item) }">
         <img :src="item.photoUri" style="width: 80px; margin-right: 8px;" />
         <span>{{ formatExpiry(item.date, viewMode) }}</span>
-        </li>
+      </li>
     </ul>
 </div>
 
@@ -189,4 +230,5 @@ li {
   align-items: center;
   margin-bottom: 8px;
 }
+ .selected { border: 2px solid blue; }
 </style>
