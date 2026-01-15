@@ -52,6 +52,29 @@ function inputDigit(d: string) {
   if (activeField.value === 'dd') {
     dd.value = apply(buffer)
   }
+
+  if (activeField.value === null) {
+    buffer += d
+
+    if (buffer.length <= 2) {
+        // DD only
+        dd.value = buffer.padStart(2, '0')
+    } else if (buffer.length <= 4) {
+        // MM DD
+        const mmRaw = buffer.slice(0, buffer.length - 2)
+        const ddRaw = buffer.slice(-2)
+
+        mm.value = mmRaw.padStart(2, '0')
+        dd.value = ddRaw // ⚠️ 不補零
+    } else {
+        // YY MM DD
+        yy.value = buffer.slice(0, 2)
+        mm.value = buffer.slice(2, 4)
+        dd.value = buffer.slice(4, 6)
+    }
+
+    return
+ }
 }
 
 function done() {
