@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import CameraView from './views/CameraView.vue'
+import ItemListView from './views/ItemListView.vue'
 </script>
 
 <template>
-  <CameraView />
+  <ItemListView />
 </template>
 
 <style>
