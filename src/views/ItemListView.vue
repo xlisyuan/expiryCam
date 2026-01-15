@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import MenuPopup from "../components/MenuPopup.vue";
 import DateConfirmView from "./DateConfirmView.vue";
 import { takePhoto } from "../services/camera";
 // import { savePhotoTemporarily } from '../services/storage'
@@ -9,6 +10,7 @@ const viewMode = ref<ViewMode>("daily");
 
 const multiSelectMode = ref(false);
 const selectedIds = ref<Set<number>>(new Set());
+const showMenu = ref(false);
 
 const now = new Date();
 const defaultDate = {
@@ -171,15 +173,18 @@ function cancelMultiSelect() {
   selectedIds.value.clear();
   multiSelectMode.value = false;
 }
-// function deleteExpired() {
-//     selectedIds.value.clear()
-//     const now = new Date()
-//     items.value.forEach(item => {
-//     const d =parseDate(item)
-//     if (d.getTime() < now.getTime()) selectedIds.value.add(item.id)
-//     })
-//     multiSelectMode.value =true
-// }
+function deleteExpired() {
+  selectedIds.value.clear();
+  const now = new Date();
+  items.value.forEach((item) => {
+    const d = parseDate(item);
+    if (d.getTime() < now.getTime()) selectedIds.value.add(item.id);
+  });
+  multiSelectMode.value = true;
+}
+function showAbout(alertText: string) {
+  window.alert(alertText);
+}
 </script>
 
 <template>
@@ -188,8 +193,10 @@ function cancelMultiSelect() {
     <button @click="cancelMultiSelect">返回</button>
   </div>
   <div class="container">
-    <!-- 拍照按鈕 -->
-    <button @click="onTakePhoto">拍照</button>
+    <div style="display: flex; justify-content: space-between">
+      <button @click="onTakePhoto">拍照</button>
+      <button @click="showMenu = true">☰</button>
+    </div>
 
     <div class="view-mode">
       <button @click="viewMode = 'daily'">每日</button>
@@ -223,6 +230,26 @@ function cancelMultiSelect() {
       @cancel="onDateCancel"
     />
   </div>
+  <MenuPopup
+    v-if="showMenu"
+    @close="showMenu = false"
+    @delete-expired="
+      deleteExpired();
+      showMenu = false;
+    "
+    @multi-select="
+      multiSelectMode = true;
+      showMenu = false;
+    "
+    @change-default-date="
+      showAbout('尚未實作');
+      showMenu = false;
+    "
+    @about="
+      showAbout('這是一個用來快速記錄物品到期日的小工具');
+      showMenu = false;
+    "
+  />
 </template>
 
 <style scoped>
