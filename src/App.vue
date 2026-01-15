@@ -1,14 +1,13 @@
 <script setup lang="ts">
+import CameraView from './views/CameraView.vue'
 </script>
 
 <template>
-  <div id="app">
-    App Booted
-  </div>
+  <CameraView />
 </template>
 
 <style>
-#app {
-  padding: 16px;
+body {
+  margin: 0;
 }
 </style>
