@@ -333,6 +333,7 @@ li {
 }
 .selected {
   border: 2px solid rgb(206, 100, 14);
+  border-radius: 6px;
 }
 .item {
   display: flex;
@@ -346,7 +347,7 @@ li {
   height: 80px;
   object-fit: cover;
   border-radius: 6px;
-  margin-right: 6px;
+  margin: 0 3px;
   /* margin-right: 12px; */
   border: 1px solid #ccc;
 }
