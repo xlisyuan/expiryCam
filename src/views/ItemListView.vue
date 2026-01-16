@@ -323,7 +323,7 @@ ul {
 .items-container {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  /* justify-content: space-between; */
   width: 100%;
 }
 li {
@@ -346,6 +346,7 @@ li {
   height: 80px;
   object-fit: cover;
   border-radius: 6px;
+  margin-right: 6px;
   /* margin-right: 12px; */
   border: 1px solid #ccc;
 }
