@@ -212,11 +212,7 @@ watch(items, persistItems, { deep: true });
 
 <template>
   <div class="sticky-header">
-    <div v-if="multiSelectMode" class="multi-actions">
-      <button @click="deleteSelected">刪除</button>
-      <button @click="cancelMultiSelect">返回</button>
-    </div>
-    <div style="display: flex; justify-content: space-between; width: 100%">
+    <div class="menu-button">
       <button @click="showMenu = true">☰</button>
     </div>
 
@@ -226,12 +222,17 @@ watch(items, persistItems, { deep: true });
       <button @click="viewMode = 'weekly'">每週</button>
       <button @click="viewMode = 'monthly'">每月</button>
     </div>
+
+    <div v-if="multiSelectMode" class="multi-actions">
+      <button @click="deleteSelected">刪除</button>
+      <button @click="cancelMultiSelect">返回</button>
+    </div>
   </div>
 
   <div class="container">
     <div v-for="(group, key) in groupedItems" :key="key" class="group">
       <div class="group-header">{{ key }}</div>
-      <ul style="display: flex; flex-wrap: wrap">
+      <ul class="items-container">
         <li
           style="flex-direction: column"
           v-for="item in group"
@@ -260,7 +261,7 @@ watch(items, persistItems, { deep: true });
   <Teleport to="body">
     <button
       v-if="!showDateConfirm && !showMenu"
-      class="floating-menu"
+      class="camera-button"
       @click="onTakePhoto"
     >
       拍照
@@ -290,9 +291,10 @@ watch(items, persistItems, { deep: true });
 </template>
 
 <style scoped>
-.floating-menu {
+.camera-button {
   position: fixed;
   right: 10px;
+  top: 75%;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   z-index: 9999;
 }
@@ -302,12 +304,27 @@ watch(items, persistItems, { deep: true });
   width: 100%;
   z-index: 1000;
 }
+.menu-button {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding-top: 20px;
+}
+.multi-actions {
+  padding-top: 10px;
+}
 .container {
-  padding: 16px;
+  padding: 16px 0;
 }
 ul {
   list-style: none;
   padding: 0;
+}
+.items-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  width: 100%;
 }
 li {
   display: flex;
@@ -315,7 +332,7 @@ li {
   margin-bottom: 8px;
 }
 .selected {
-  border: 2px solid blue;
+  border: 2px solid rgb(206, 100, 14);
 }
 .item {
   display: flex;
@@ -329,7 +346,7 @@ li {
   height: 80px;
   object-fit: cover;
   border-radius: 6px;
-  margin-right: 12px;
+  /* margin-right: 12px; */
   border: 1px solid #ccc;
 }
 

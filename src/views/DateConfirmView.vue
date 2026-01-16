@@ -98,22 +98,24 @@ function pressCancel() {
   <div class="overlay">
     <img :src="photoUri" class="preview" />
 
-    <div class="date-input">
-      <span @click="startInput('yy')">{{ yy }}</span> |
-      <span @click="startInput('mm')">{{ mm }}</span> |
-      <span @click="startInput('dd')">{{ dd }}</span>
-    </div>
+    <div class="input-area">
+      <div class="date-input">
+        <span @click="startInput('yy')">{{ yy }}</span> |
+        <span @click="startInput('mm')">{{ mm }}</span> |
+        <span @click="startInput('dd')">{{ dd }}</span>
+      </div>
 
-    <div class="numpad">
-      <button v-for="n in 9" :key="n" @click="inputDigit(n.toString())">
-        {{ n }}
-      </button>
-      <button @click="inputDigit('0')">0</button>
-    </div>
+      <div class="numpad">
+        <button v-for="n in 9" :key="n" @click="inputDigit(n.toString())">
+          {{ n }}
+        </button>
+        <button @click="inputDigit('0')">0</button>
+      </div>
 
-    <div class="actions">
-      <button @click="pressCancel">X</button>
-      <button @click="pressDone">Done</button>
+      <div class="actions">
+        <button @click="pressCancel">X</button>
+        <button @click="pressDone">Done</button>
+      </div>
     </div>
   </div>
 </template>
@@ -130,10 +132,16 @@ function pressCancel() {
 }
 .preview {
   max-width: 80%;
+  max-height: 50%;
   margin-bottom: 12px;
+}
+.input-area {
+  bottom: 10%;
+  position: absolute;
 }
 .date-input {
   font-size: 24px;
+  color: black;
   margin-bottom: 12px;
 }
 .date-input span {
