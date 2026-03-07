@@ -10,9 +10,19 @@ const props = defineProps<Props>();
 
 /** emits */
 const emit = defineEmits<{
-  (e: "done", date: { yy: string; mm: string; dd: string }): void;
+  (
+    e: "done",
+    data: {
+      date: { yy: string; mm: string; dd: string };
+      compressedPhoto: string;
+    }
+  ): void;
   (e: "cancel"): void;
 }>();
+
+/** 壓縮後的圖片 */
+const compressedPhotoUri = ref<string>("");
+const imgElement = ref<HTMLImageElement | null>(null);
 
 /** 日期狀態 */
 const yy = ref(props.defaultDate.yy);
@@ -79,9 +89,55 @@ function inputDigit(d: string) {
   }
 }
 
+/** 壓縮圖片 */
+function compressImage() {
+  if (!imgElement.value) return;
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  const img = imgElement.value;
+  
+  // 設定最大寬高（可調整這個值來控制壓縮程度）
+  const MAX_WIDTH = 800;
+  const MAX_HEIGHT = 800;
+  
+  let width = img.naturalWidth;
+  let height = img.naturalHeight;
+
+  // 等比例縮放
+  if (width > height) {
+    if (width > MAX_WIDTH) {
+      height = (height * MAX_WIDTH) / width;
+      width = MAX_WIDTH;
+    }
+  } else {
+    if (height > MAX_HEIGHT) {
+      width = (width * MAX_HEIGHT) / height;
+      height = MAX_HEIGHT;
+    }
+  }
+
+  canvas.width = width;
+  canvas.height = height;
+
+  // 繪製並壓縮
+  ctx.drawImage(img, 0, 0, width, height);
+  
+  // 轉換成 base64，quality 0.7 表示 70% 品質（可調整 0.1~1.0）
+  compressedPhotoUri.value = canvas.toDataURL("image/jpeg", 0.7);
+}
+
 /** Done */
 function pressDone() {
-  emit("done", { yy: yy.value, mm: mm.value, dd: dd.value });
+  // 在確認時才執行壓縮
+  compressImage();
+  
+  emit("done", {
+    date: { yy: yy.value, mm: mm.value, dd: dd.value },
+    compressedPhoto: compressedPhotoUri.value,
+  });
   resetBuffer();
   activeField.value = null;
 }
@@ -96,7 +152,7 @@ function pressCancel() {
 
 <template>
   <div class="overlay">
-    <img :src="photoUri" class="preview" />
+    <img ref="imgElement" :src="photoUri" class="preview" crossorigin="anonymous" />
 
     <div class="input-area">
       <div class="date-input">

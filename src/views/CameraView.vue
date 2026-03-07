@@ -47,10 +47,13 @@ function cancelConfirm() {
 }
 
 /** 日期確認完成 */
-function doneConfirm(date: { yy: string; mm: string; dd: string }) {
+function doneConfirm(data: {
+  date: { yy: string; mm: string; dd: string };
+  compressedPhoto: string;
+}) {
   console.log("SAVE ITEM", {
-    photoUri: savedPath.value,
-    expiry: `${date.yy}${date.mm}${date.dd}`,
+    photoUri: data.compressedPhoto, // 使用壓縮後的圖片
+    expiry: `${data.date.yy}${data.date.mm}${data.date.dd}`,
   });
 
   // 👉 之後這裡會存進 DB
