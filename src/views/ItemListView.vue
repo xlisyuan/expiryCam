@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import MenuPopup from "../components/MenuPopup.vue";
 import DateConfirmView from "./DateConfirmView.vue";
+import ItemDetailPopup from "../components/ItemDetailPopup.vue";
 import { takePhoto } from "../services/camera";
 import { Preferences } from "@capacitor/preferences";
 import { onMounted, watch } from "vue";
@@ -76,6 +77,40 @@ function onDateCancel() {
   // 取消日期 → 暫存照片不存入清單
   tempPhotoUri.value = null;
   showDateConfirm.value = false;
+}
+
+// -------------------------
+// 物品詳情
+// -------------------------
+const selectedItem = ref<Item | null>(null);
+
+function showItemDetail(item: Item) {
+  // 在多選模式下不顯示詳情，而是切換選取狀態
+  if (multiSelectMode.value) {
+    toggleSelect(item);
+    return;
+  }
+  selectedItem.value = item;
+}
+
+function closeItemDetail() {
+  selectedItem.value = null;
+}
+
+function deleteItemById(id: number) {
+  items.value = items.value.filter((item) => item.id !== id);
+  selectedItem.value = null;
+}
+
+function updateItemDate(data: {
+  id: number;
+  date: { yy: string; mm: string; dd: string };
+}) {
+  const item = items.value.find((i) => i.id === data.id);
+  if (item) {
+    item.date = data.date;
+  }
+  selectedItem.value = null;
 }
 
 import { computed } from "vue";
@@ -240,7 +275,7 @@ watch(items, persistItems, { deep: true });
           style="flex-direction: column"
           v-for="item in group"
           :key="item.id"
-          @click="multiSelectMode ? toggleSelect(item) : null"
+          @click="showItemDetail(item)"
           :class="{ selected: isSelected(item) }"
         >
           <img :src="item.photoUri" class="item-thumb" />
@@ -258,6 +293,15 @@ watch(items, persistItems, { deep: true });
       :default-date="defaultDate"
       @done="onDateDone"
       @cancel="onDateCancel"
+    />
+
+    <!-- 物品詳情 popup -->
+    <ItemDetailPopup
+      v-if="selectedItem"
+      :item="selectedItem"
+      @close="closeItemDetail"
+      @delete="deleteItemById"
+      @update-date="updateItemDate"
     />
   </div>
 
