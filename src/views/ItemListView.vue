@@ -8,7 +8,7 @@ import { onMounted, watch } from "vue";
 // import { savePhotoTemporarily } from '../services/storage'
 
 type ViewMode = "daily" | "weekly" | "monthly" | "none";
-const viewMode = ref<ViewMode>("daily");
+const viewMode = ref<ViewMode>("monthly");
 
 const multiSelectMode = ref(false);
 const selectedIds = ref<Set<number>>(new Set());
