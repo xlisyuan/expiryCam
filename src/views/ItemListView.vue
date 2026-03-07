@@ -195,125 +195,6 @@ function showAbout(alertText: string) {
   window.alert(alertText);
 }
 
-// -------------------------
-// 轉存過往圖片為壓縮格式
-// -------------------------
-async function convertOldPhotos() {
-  if (items.value.length === 0) {
-    window.alert("沒有需要轉換的照片");
-    return;
-  }
-
-  const confirmed = window.confirm(
-    `即將轉換 ${items.value.length} 張照片為壓縮格式。\n這個過程可能需要一些時間，請耐心等待。\n\n是否繼續？`
-  );
-  
-  if (!confirmed) return;
-
-  let successCount = 0;
-  let errorCount = 0;
-
-  for (let i = 0; i < items.value.length; i++) {
-    const item = items.value[i];
-    
-    // TypeScript 安全檢查
-    if (!item) {
-      errorCount++;
-      continue;
-    }
-    
-    try {
-      // 跳過已經是 base64 格式的圖片（表示已經壓縮過）
-      if (item.photoUri.startsWith("data:image")) {
-        successCount++;
-        continue;
-      }
-
-      // 壓縮圖片
-      const compressedUri = await compressPhotoUri(item.photoUri);
-      
-      if (compressedUri && items.value[i]) {
-        // 更新為壓縮後的圖片
-        items.value[i]!.photoUri = compressedUri;
-        successCount++;
-      } else {
-        errorCount++;
-      }
-    } catch (error) {
-      console.error(`轉換照片 ${item.id} 失敗:`, error);
-      errorCount++;
-    }
-  }
-
-  // 手動觸發儲存
-  await persistItems();
-
-  window.alert(
-    `轉換完成！\n成功: ${successCount} 張\n失敗: ${errorCount} 張`
-  );
-}
-
-// 壓縮單張圖片
-function compressPhotoUri(photoUri: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    
-    img.onload = () => {
-      try {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        
-        if (!ctx) {
-          resolve(null);
-          return;
-        }
-
-        // 設定最大寬高
-        const MAX_WIDTH = 800;
-        const MAX_HEIGHT = 800;
-        
-        let width = img.naturalWidth;
-        let height = img.naturalHeight;
-
-        // 等比例縮放（保持原始比例）
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height = (height * MAX_WIDTH) / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width = (width * MAX_HEIGHT) / height;
-            height = MAX_HEIGHT;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        // 繪製並壓縮
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        // 轉換成 base64，quality 0.7 表示 70% 品質
-        const compressed = canvas.toDataURL("image/jpeg", 0.7);
-        resolve(compressed);
-      } catch (error) {
-        console.error("壓縮失敗:", error);
-        resolve(null);
-      }
-    };
-
-    img.onerror = () => {
-      console.error("載入圖片失敗:", photoUri);
-      resolve(null);
-    };
-
-    // 設定 crossOrigin 以避免 CORS 問題
-    img.crossOrigin = "anonymous";
-    img.src = photoUri;
-  });
-}
-
 async function persistItems() {
   await Preferences.set({
     key: "items",
@@ -404,10 +285,6 @@ watch(items, persistItems, { deep: true });
     @change-default-date="
       showAbout('尚未實作');
       showMenu = false;
-    "
-    @convert-old-photos="
-      showMenu = false;
-      convertOldPhotos();
     "
     @about="
       showAbout('這是一個用來快速記錄物品到期日的小工具');
